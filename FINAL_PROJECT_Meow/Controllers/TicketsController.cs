@@ -7,6 +7,9 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using FINAL_PROJECT_Meow.Data;
 using FINAL_PROJECT_Meow.Models;
+using Microsoft.Extensions.Configuration.UserSecrets;
+using System.Security.Claims;
+using Microsoft.Exchange.WebServices.Data;
 
 namespace FINAL_PROJECT_Meow.Controllers
 {
@@ -22,8 +25,11 @@ namespace FINAL_PROJECT_Meow.Controllers
         // GET: Tickets
         public async Task<IActionResult> Index()
         {
-            var applicationDbContext = _context.Tickets.Include(t => t.CreatedBy);
-            return View(await applicationDbContext.ToListAsync());
+            var tickets = await _context.Tickets
+                .Include(t => t.CreatedBy)
+                .OrderBy(x=> x.CreatedOn)
+                .ToListAsync();
+            return View(tickets);
         }
 
         // GET: Tickets/Details/5
@@ -57,13 +63,18 @@ namespace FINAL_PROJECT_Meow.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create( Ticket ticket)
+        public async Task<IActionResult> Create(Ticket ticket)
         {
-            
-            
-                _context.Add(ticket);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
+
+            //add this also on comments / remarks
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            ticket.CreatedOn = DateTime.Now;
+            ticket.CreatedById = userId;
+
+
+            _context.Add(ticket);
+            await _context.SaveChangesAsync();
+            return RedirectToAction(nameof(Index));
 
             ViewData["CreatedById"] = new SelectList(_context.Users, "Id", "FullName", ticket.CreatedById);
             return View(ticket);

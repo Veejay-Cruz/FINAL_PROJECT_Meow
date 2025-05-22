@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using FINAL_PROJECT_Meow.Data;
 using FINAL_PROJECT_Meow.Models;
+using System.Security.Claims;
 
 namespace FINAL_PROJECT_Meow.Controllers
 {
@@ -69,9 +70,13 @@ namespace FINAL_PROJECT_Meow.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(Comment comment)
         {
-            
-           
-                _context.Add(comment);
+
+
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            comment.CreatedOn = DateTime.Now;
+            comment.CreatedById = userId;
+
+            _context.Add(comment);
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             

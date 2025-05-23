@@ -7,6 +7,40 @@
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/FINAL_PROJECT_Meow.styles.css" asp-append-version="true" />
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+
+        .hero {
+            background: linear-gradient(to right, #0d6efd, #6610f2);
+            color: white;
+            padding: 3rem 1rem;
+            text-align: center;
+        }
+
+        .contributors {
+            background-color: white;
+            color: #333;
+            padding: 3rem 1rem;
+            text-align: center;
+        }
+
+        .content-card {
+            background-color: white;
+            border-radius: 1rem;
+            box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.1);
+            padding: 2rem;
+            margin-top: -3rem;
+            position: relative;
+            z-index: 10;
+        }
+
+        footer {
+            background-color: #343a40;
+            color: #ccc;
+        }
+    </style>
 </head>
 <body>
     <header>
@@ -38,6 +72,14 @@
         </main>
     </div>
 
+    
+    <main class="container">
+        <div class="content-card">
+            @RenderBody()
+        </div>
+
+       
+
     <footer class="border-top footer text-muted">
         <div class="container">
             &copy; 2025 - FINAL_PROJECT_Meow - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
@@ -49,3 +91,4 @@
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>
+

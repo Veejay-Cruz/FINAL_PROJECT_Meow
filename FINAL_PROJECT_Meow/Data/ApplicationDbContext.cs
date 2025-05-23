@@ -12,6 +12,7 @@ namespace FINAL_PROJECT_Meow.Data
         }
         public DbSet<Ticket> Tickets  { get; set; }
         public DbSet<Comment> Comments { get; set; }
+        public DbSet<AuditTrail> AuditTrails { get; set; }
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base. OnModelCreating(builder);

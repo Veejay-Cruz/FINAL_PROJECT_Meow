@@ -7,9 +7,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using FINAL_PROJECT_Meow.Data;
 using FINAL_PROJECT_Meow.Models;
-using Microsoft.Extensions.Configuration.UserSecrets;
 using System.Security.Claims;
-using Microsoft.Exchange.WebServices.Data;
 
 namespace FINAL_PROJECT_Meow.Controllers
 {
@@ -59,14 +57,10 @@ namespace FINAL_PROJECT_Meow.Controllers
         }
 
         // POST: Tickets/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(Ticket ticket)
         {
-
-            //add this also on comments / remarks
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             ticket.CreatedOn = DateTime.Now;
             ticket.CreatedById = userId;
@@ -75,9 +69,6 @@ namespace FINAL_PROJECT_Meow.Controllers
             _context.Add(ticket);
             await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
-
-            ViewData["CreatedById"] = new SelectList(_context.Users, "Id", "FullName", ticket.CreatedById);
-            return View(ticket);
         }
 
         // GET: Tickets/Edit/5
@@ -98,8 +89,6 @@ namespace FINAL_PROJECT_Meow.Controllers
         }
 
         // POST: Tickets/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, [Bind("Id,Title,Description,Status,Priority,CreatedById,CreatedOn")] Ticket ticket)
@@ -163,7 +152,6 @@ namespace FINAL_PROJECT_Meow.Controllers
                 _context.Tickets.Remove(ticket);
             }
 
-            await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }
 

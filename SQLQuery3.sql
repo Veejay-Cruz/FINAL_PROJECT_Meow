@@ -1,8 +1,0 @@
-SELECT TOP (1000) [Id]
-      ,[Title]
-      ,[Description]
-      ,[Status]
-      ,[Priority]
-      ,[CreatedById]
-      ,[CreatedOn]
-  FROM [MeowDB].[dbo].[Tickets]

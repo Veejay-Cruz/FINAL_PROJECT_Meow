@@ -173,6 +173,21 @@ namespace FINAL_PROJECT_Meow.Controllers
             return View(ticket);
         }
 
+        public async Task<IActionResult> View(int id)
+        {
+            var comment = await _context.Comments
+                .Include(c => c.CreatedBy)
+                .Include(c => c.Ticket)
+                .FirstOrDefaultAsync(m => m.Id == id);
+
+            if (comment == null)
+            {
+                return NotFound();
+            }
+
+            return View(comment);
+        }
+
         // POST: Tickets/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]

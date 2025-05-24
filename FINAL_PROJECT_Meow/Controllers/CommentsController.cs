@@ -47,13 +47,17 @@ namespace FINAL_PROJECT_Meow.Controllers
                 .Include(c => c.CreatedBy)
                 .Include(c => c.Ticket)
                 .FirstOrDefaultAsync(m => m.Id == id);
+
             if (comment == null)
             {
                 return NotFound();
             }
 
+            Console.WriteLine($"Details loaded for Comment ID={comment.Id}, Ticket={comment.Ticket?.Title}, CreatedBy={comment.CreatedBy?.FullName}");
+
             return View(comment);
         }
+
 
         // GET: Comments/Create
         public IActionResult Create()
@@ -175,6 +179,8 @@ namespace FINAL_PROJECT_Meow.Controllers
 
             return View(comment);
         }
+
+      
 
         // POST: Comments/Delete/5
         [HttpPost, ActionName("Delete")]

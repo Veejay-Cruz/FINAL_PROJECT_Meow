@@ -11,7 +11,6 @@ namespace FINAL_PROJECT_Meow.Controllers
 {
     public class UsersController : Controller
     {
-        
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly RoleManager<IdentityRole> _roleManager;
         private readonly SignInManager<ApplicationUser> _signInManager;
@@ -25,8 +24,6 @@ namespace FINAL_PROJECT_Meow.Controllers
             _roleManager = roleManager;
             _signInManager = signInManager;
         }
-
-
 
         // GET: UsersController
         public async Task<ActionResult> Index()
@@ -44,7 +41,6 @@ namespace FINAL_PROJECT_Meow.Controllers
         // GET: UsersController/Create
         public ActionResult Create()
         {
-
             return View();
         }
 
@@ -55,48 +51,64 @@ namespace FINAL_PROJECT_Meow.Controllers
         {
             try
             {
-                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-                ApplicationUser registereduser = new();
-                registereduser.LastName = user.LastName;
-                registereduser.FirstName = user.FirstName;
-                registereduser.MiddleName = user.MiddleName;
-                registereduser.Address = user.Address;
-                registereduser.PhoneNumber = user.PhoneNumber;
-                registereduser.UserName = user.UserName;
-                registereduser.NormalizedUserName = user.UserName;
-                registereduser.Email = user.Email;
-                registereduser.EmailConfirmed = true;
-                registereduser.PasswordHash = user.PasswordHash;
-                
+                // Get current user's ID if they're logged in
+                var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+                ApplicationUser registereduser = new ApplicationUser
+                {
+                    LastName = user.LastName,
+                    FirstName = user.FirstName,
+                    MiddleName = user.MiddleName,
+                    Address = user.Address,
+                    PhoneNumber = user.PhoneNumber,
+                    UserName = user.UserName,
+                    NormalizedUserName = user.UserName?.ToUpper(),
+                    Email = user.Email,
+                    EmailConfirmed = true
+                };
+
                 var result = await _userManager.CreateAsync(registereduser, user.PasswordHash);
 
-                if(result.Succeeded)
+                if (result.Succeeded)
                 {
-                    // Log the Audit Trail
-                    var activity = new AuditTrail
+                    // Ensure we have the user's ID after creation
+                    var createdUser = await _userManager.FindByNameAsync(registereduser.UserName);
+                    if (createdUser != null)
                     {
-                        Action = "Create",
-                        TimeStamp = DateTime.Now,
-                        IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString(),
-                        UserId = userId,
-                        Module = "Users",
-                        AffectedTable = "Users"
-                    };
+                        // Log the Audit Trail
+                        var activity = new AuditTrail
+                        {
+                            Action = "Create",
+                            TimeStamp = DateTime.Now,
+                            IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString(),
+                            UserId = currentUserId ?? createdUser.Id, // Use current user's ID if available, otherwise use created user's ID
+                            Module = "Users",
+                            AffectedTable = "Users"
+                        };
 
-
-                    _context.AuditTrails.Add(activity);
-                    await _context.SaveChangesAsync();
-                    return RedirectToAction(nameof(Index));
+                        _context.AuditTrails.Add(activity);
+                        await _context.SaveChangesAsync();
+                        return RedirectToAction(nameof(Index));
+                    }
+                    else
+                    {
+                        ModelState.AddModelError("", "User was created but could not be retrieved.");
+                        return View(user);
+                    }
                 }
                 else
                 {
-                    return View();
+                    foreach (var error in result.Errors)
+                    {
+                        ModelState.AddModelError("", error.Description);
+                    }
+                    return View(user);
                 }
-
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
-                return View();
+                ModelState.AddModelError("", "An error occurred while creating the user.");
+                return View(user);
             }
         }
 

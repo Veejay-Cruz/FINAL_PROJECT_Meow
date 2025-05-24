@@ -1,7 +1,12 @@
 {
   "Version": 1,
-  "WorkspaceRootPath": "C:\\Users\\Precious Aubrey\\Desktop\\hilpdisk\\FINAL_PROJECT_Meow\\",
-  "Documents": [],
+  "WorkspaceRootPath": "C:\\Users\\Precious Aubrey\\Documents\\FINAL_PROJECT_Meow\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{F455C7E6-85E4-45D2-ABA0-6B8C32CAD3B8}|FINAL_PROJECT_Meow\\FINAL_PROJECT_Meow.csproj|c:\\users\\precious aubrey\\documents\\final_project_meow\\final_project_meow\\models\\audittrail.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{F455C7E6-85E4-45D2-ABA0-6B8C32CAD3B8}|FINAL_PROJECT_Meow\\FINAL_PROJECT_Meow.csproj|solutionrelative:final_project_meow\\models\\audittrail.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    }
+  ],
   "DocumentGroupContainers": [
     {
       "Orientation": 0,
@@ -9,11 +14,32 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": -1,
+          "SelectedChildIndex": 1,
           "Children": [
             {
               "$type": "Bookmark",
               "Name": "ST:128:0:{75188d03-9892-4ae2-abf1-207126247ce5}"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "AuditTrail.cs",
+              "DocumentMoniker": "C:\\Users\\Precious Aubrey\\Documents\\FINAL_PROJECT_Meow\\FINAL_PROJECT_Meow\\Models\\AuditTrail.cs",
+              "RelativeDocumentMoniker": "FINAL_PROJECT_Meow\\Models\\AuditTrail.cs",
+              "ToolTip": "C:\\Users\\Precious Aubrey\\Documents\\FINAL_PROJECT_Meow\\FINAL_PROJECT_Meow\\Models\\AuditTrail.cs",
+              "RelativeToolTip": "FINAL_PROJECT_Meow\\Models\\AuditTrail.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-05-24T13:26:14.582Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{34e76e81-ee4a-11d0-ae2e-00a0c90fffc3}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{1c4feeaa-4718-4aa9-859d-94ce25d182ba}"
             }
           ]
         }

@@ -69,26 +69,24 @@ namespace FINAL_PROJECT_Meow.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(Ticket ticket)
         {
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
             // Log the Audit Trail
             var activity = new AuditTrail
             {
                 Action = "Create",
                 TimeStamp = DateTime.Now,
                 IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString(),
-                UserId = userId,
-                Module = "Ticket",
-                AffectedTable = "Ticket"
+                //UserId = userId,
+                Module = "Tickets",
+                AffectedTable = "Tickets"
             };
-
-
 
 
             _context.AuditTrails.Add(activity);
             await _context.SaveChangesAsync();
 
             //add this also on comments / remarks
-            //var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             ticket.CreatedOn = DateTime.Now;
             ticket.CreatedById = userId;
 

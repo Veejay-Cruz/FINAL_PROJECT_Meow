@@ -72,6 +72,20 @@ namespace FINAL_PROJECT_Meow.Controllers
 
                 if(result.Succeeded)
                 {
+                    // Log the Audit Trail
+                    var activity = new AuditTrail
+                    {
+                        Action = "Create",
+                        TimeStamp = DateTime.Now,
+                        IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString(),
+                        UserId = userId,
+                        Module = "Users",
+                        AffectedTable = "Users"
+                    };
+
+
+                    _context.AuditTrails.Add(activity);
+                    await _context.SaveChangesAsync();
                     return RedirectToAction(nameof(Index));
                 }
                 else

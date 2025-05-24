@@ -10,9 +10,11 @@ using FINAL_PROJECT_Meow.Models;
 using Microsoft.Extensions.Configuration.UserSecrets;
 using System.Security.Claims;
 using Microsoft.Exchange.WebServices.Data;
+using System.Diagnostics;
 
 namespace FINAL_PROJECT_Meow.Controllers
 {
+    [DebuggerDisplay($"{{{nameof(GetDebuggerDisplay)}(),nq}}")]
     public class TicketsController : Controller
     {
         private readonly ApplicationDbContext _context;
@@ -27,10 +29,12 @@ namespace FINAL_PROJECT_Meow.Controllers
         {
             var tickets = await _context.Tickets
                 .Include(t => t.CreatedBy)
-                .OrderBy(x=> x.CreatedOn)
+                .OrderBy(x => x.CreatedOn)
                 .ToListAsync();
             return View(tickets);
         }
+        
+
 
         // GET: Tickets/Details/5
         public async Task<IActionResult> Details(int? id)
@@ -65,9 +69,26 @@ namespace FINAL_PROJECT_Meow.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(Ticket ticket)
         {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            // Log the Audit Trail
+            var activity = new AuditTrail
+            {
+                Action = "Create",
+                TimeStamp = DateTime.Now,
+                IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString(),
+                UserId = userId,
+                Module = "Ticket",
+                AffectedTable = "Ticket"
+            };
+
+
+
+
+            _context.AuditTrails.Add(activity);
+            await _context.SaveChangesAsync();
 
             //add this also on comments / remarks
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            //var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             ticket.CreatedOn = DateTime.Now;
             ticket.CreatedById = userId;
 
@@ -170,6 +191,11 @@ namespace FINAL_PROJECT_Meow.Controllers
         private bool TicketExists(int id)
         {
             return _context.Tickets.Any(e => e.Id == id);
+        }
+
+        private string GetDebuggerDisplay()
+        {
+            return ToString();
         }
     }
 }

@@ -24,6 +24,17 @@ builder.Services.AddRazorPages();
 
 var app = builder.Build();
 
+// Initialize roles and admin user
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
+    var userManager = services.GetRequiredService<UserManager<ApplicationUser>>();
+
+    await DbInitializer.InitializeRoles(roleManager);
+    await DbInitializer.InitializeAdminUser(userManager);
+}
+
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {

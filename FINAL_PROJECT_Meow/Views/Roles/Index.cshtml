@@ -1,0 +1,76 @@
+﻿@model List<FINAL_PROJECT_Meow.Controllers.UserRoleViewModel>
+
+@{
+    ViewData["Title"] = "Role Management";
+}
+
+<div class="container">
+    <h2>Role Management</h2>
+    <div class="table-responsive">
+        <table class="table table-bordered table-striped">
+            <thead>
+                <tr>
+                    <th>User</th>
+                    <th>Email</th>
+                    @foreach (var role in Model.FirstOrDefault()?.AllRoles ?? new List<string>())
+                    {
+                        <th>@role</th>
+                    }
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var user in Model)
+                {
+                    <tr>
+                        <td>@user.FullName</td>
+                        <td>@user.Email</td>
+                        @foreach (var role in user.AllRoles)
+                        {
+                            <td>
+                                <div class="form-check">
+                                    <input type="checkbox" class="form-check-input role-checkbox"
+                                           data-user-id="@user.UserId"
+                                           data-role="@role"
+                                    @(user.Roles.Contains(role) ? "checked" : "")>
+                                </div>
+                            </td>
+                        }
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            $('.role-checkbox').change(function () {
+                var checkbox = $(this);
+                var userId = checkbox.data('user-id');
+                var role = checkbox.data('role');
+                var isChecked = checkbox.prop('checked');
+
+                $.ajax({
+                    url: '@Url.Action("UpdateUserRole", "Roles")',
+                    type: 'POST',
+                    data: {
+                        userId: userId,
+                        role: role,
+                        isSelected: isChecked
+                    },
+                    success: function (response) {
+                        if (!response.success) {
+                            alert(response.message);
+                            checkbox.prop('checked', !isChecked);
+                        }
+                    },
+                    error: function () {
+                        alert('An error occurred while updating the role.');
+                        checkbox.prop('checked', !isChecked);
+                    }
+                });
+            });
+        });
+    </script>
+}

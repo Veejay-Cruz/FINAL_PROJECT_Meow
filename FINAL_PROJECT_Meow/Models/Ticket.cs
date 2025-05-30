@@ -16,6 +16,10 @@
         public ApplicationUser CreatedBy { get; set; }
         public DateTime CreatedOn { get; set; }
 
+        public string? AssignedToId { get; set; }
+        public ApplicationUser? AssignedTo { get; set; }
+        public DateTime? AssignedOn { get; set; }
 
+        public DateTime? ResolvedOn { get; set; }
     }
 }

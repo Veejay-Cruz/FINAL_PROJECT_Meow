@@ -11,26 +11,51 @@ using Microsoft.Extensions.Configuration.UserSecrets;
 using System.Security.Claims;
 using Microsoft.Exchange.WebServices.Data;
 using System.Diagnostics;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 
 namespace FINAL_PROJECT_Meow.Controllers
 {
+    [Authorize]
     [DebuggerDisplay($"{{{nameof(GetDebuggerDisplay)}(),nq}}")]
     public class TicketsController : Controller
     {
         private readonly ApplicationDbContext _context;
+        private readonly UserManager<ApplicationUser> _userManager;
 
-        public TicketsController(ApplicationDbContext context)
+        public TicketsController(ApplicationDbContext context, UserManager<ApplicationUser> userManager)
         {
             _context = context;
+            _userManager = userManager;
         }
 
         // GET: Tickets
         public async Task<IActionResult> Index()
         {
+            var user = await _userManager.GetUserAsync(User);
+            var userRoles = await _userManager.GetRolesAsync(user);
+            
             var tickets = await _context.Tickets
                 .Include(t => t.CreatedBy)
-                .OrderBy(x => x.CreatedOn)
+                .Include(t => t.AssignedTo)
+                .OrderByDescending(x => x.CreatedOn)
                 .ToListAsync();
+
+            // If user is not supervisor or officer, only show their tickets
+            if (!userRoles.Contains("Supervisor") && !userRoles.Contains("Officer"))
+            {
+                tickets = tickets.Where(t => t.CreatedById == user.Id).ToList();
+            }
+
+            // If user is supervisor, get list of officers and junior officers for assignment
+            if (userRoles.Contains("Supervisor"))
+            {
+                var officers = await _userManager.GetUsersInRoleAsync("Officer");
+                var juniorOfficers = await _userManager.GetUsersInRoleAsync("Junior Officer");
+                var availableOfficers = officers.Union(juniorOfficers).OrderBy(u => u.LastName).ToList();
+                ViewBag.AvailableOfficers = new SelectList(availableOfficers, "Id", "FullName");
+            }
+
             return View(tickets);
         }
         
@@ -91,6 +116,7 @@ namespace FINAL_PROJECT_Meow.Controllers
             //var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             ticket.CreatedOn = DateTime.Now;
             ticket.CreatedById = userId;
+            ticket.Status = "Open";  // Set default status to Open
 
 
             _context.Add(ticket);
@@ -185,6 +211,137 @@ namespace FINAL_PROJECT_Meow.Controllers
             }
 
             await _context.SaveChangesAsync();
+            return RedirectToAction(nameof(Index));
+        }
+
+        // POST: Tickets/StartResolution/5
+        [HttpPost]
+        [Authorize(Roles = "Supervisor,Officer")]
+        public async Task<IActionResult> StartResolution(int id)
+        {
+            var ticket = await _context.Tickets.FindAsync(id);
+            if (ticket == null)
+            {
+                return NotFound();
+            }
+
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            // Verify that the user is assigned to this ticket
+            if (ticket.AssignedToId != userId)
+            {
+                return Unauthorized("You are not assigned to this ticket.");
+            }
+
+            // Verify the ticket is in a state that can be started
+            if (ticket.Status != "Open" && ticket.Status != "Assigned")
+            {
+                return BadRequest("Ticket cannot be started in its current state.");
+            }
+
+            ticket.Status = "In Progress";
+            ticket.AssignedOn = DateTime.Now;
+
+            // Log the Audit Trail
+            var activity = new AuditTrail
+            {
+                Action = "Start Resolution",
+                TimeStamp = DateTime.Now,
+                IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString(),
+                UserId = userId,
+                Module = "Ticket",
+                AffectedTable = "Ticket"
+            };
+
+            _context.AuditTrails.Add(activity);
+            await _context.SaveChangesAsync();
+
+            return RedirectToAction(nameof(Index));
+        }
+
+        // POST: Tickets/CompleteResolution/5
+        [HttpPost]
+        [Authorize(Roles = "Supervisor,Officer")]
+        public async Task<IActionResult> CompleteResolution(int id)
+        {
+            var ticket = await _context.Tickets.FindAsync(id);
+            if (ticket == null)
+            {
+                return NotFound();
+            }
+
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            // Only the assigned user can complete the resolution
+            if (ticket.AssignedToId != userId)
+            {
+                return Unauthorized();
+            }
+
+            ticket.Status = "Closed";
+            ticket.ResolvedOn = DateTime.Now;
+
+            // Log the Audit Trail
+            var activity = new AuditTrail
+            {
+                Action = "Complete Resolution",
+                TimeStamp = DateTime.Now,
+                IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString(),
+                UserId = userId,
+                Module = "Ticket",
+                AffectedTable = "Ticket"
+            };
+
+            _context.AuditTrails.Add(activity);
+            await _context.SaveChangesAsync();
+
+            return RedirectToAction(nameof(Index));
+        }
+
+        // POST: Tickets/AssignTicket/5
+        [HttpPost]
+        [Authorize(Roles = "Supervisor")]
+        public async Task<IActionResult> AssignTicket(int id, string assignedToId)
+        {
+            var ticket = await _context.Tickets.FindAsync(id);
+            if (ticket == null)
+            {
+                return NotFound();
+            }
+
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            // Verify the assigned user exists and is an officer or junior officer
+            var assignedUser = await _userManager.FindByIdAsync(assignedToId);
+            if (assignedUser == null)
+            {
+                return NotFound();
+            }
+
+            var assignedUserRoles = await _userManager.GetRolesAsync(assignedUser);
+            if (!assignedUserRoles.Contains("Officer") && !assignedUserRoles.Contains("Junior Officer"))
+            {
+                return BadRequest("User must be an Officer or Junior Officer");
+            }
+
+            ticket.AssignedToId = assignedToId;
+            ticket.AssignedOn = DateTime.Now;
+            ticket.Status = "Assigned";
+
+            // Log the Audit Trail
+            var activity = new AuditTrail
+            {
+                Action = "Assign Ticket",
+                TimeStamp = DateTime.Now,
+                IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString(),
+                UserId = userId,
+                Module = "Ticket",
+                AffectedTable = "Ticket"
+            };
+
+            _context.AuditTrails.Add(activity);
+            await _context.SaveChangesAsync();
+
             return RedirectToAction(nameof(Index));
         }
 

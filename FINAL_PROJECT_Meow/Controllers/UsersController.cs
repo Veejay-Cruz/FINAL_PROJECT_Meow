@@ -36,9 +36,21 @@ namespace FINAL_PROJECT_Meow.Controllers
         }
 
         // GET: UsersController/Details/5
-        public ActionResult Details(int id)
+        public async Task<ActionResult> Details(string id)
         {
-            return View();
+            if (id == null)
+            {
+                return NotFound();
+            }
+
+            var user = await _context.Users
+                .FirstOrDefaultAsync(m => m.Id == id);
+            if (user == null)
+            {
+                return NotFound();
+            }
+
+            return View(user);
         }
 
         // GET: UsersController/Create
@@ -51,24 +63,31 @@ namespace FINAL_PROJECT_Meow.Controllers
         // POST: UsersController/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<ActionResult> Create(ApplicationUser user)
+        public async Task<ActionResult> Create(ApplicationUser user, string Password)
         {
             try
             {
+                if (string.IsNullOrEmpty(Password))
+                {
+                    ModelState.AddModelError("Password", "Password is required");
+                    return View(user);
+                }
+
                 var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-                ApplicationUser registereduser = new();
-                registereduser.LastName = user.LastName;
-                registereduser.FirstName = user.FirstName;
-                registereduser.MiddleName = user.MiddleName;
-                registereduser.Address = user.Address;
-                registereduser.PhoneNumber = user.PhoneNumber;
-                registereduser.UserName = user.UserName;
-                registereduser.NormalizedUserName = user.UserName;
-                registereduser.Email = user.Email;
-                registereduser.EmailConfirmed = true;
-                registereduser.PasswordHash = user.PasswordHash;
-                
-                var result = await _userManager.CreateAsync(registereduser, user.PasswordHash);
+                var newUser = new ApplicationUser
+                {
+                    LastName = user.LastName,
+                    FirstName = user.FirstName,
+                    MiddleName = user.MiddleName,
+                    Address = user.Address,
+                    PhoneNumber = user.PhoneNumber,
+                    UserName = user.UserName,
+                    Email = user.Email,
+                    EmailConfirmed = true
+                };
+
+                // Create user with the provided password
+                var result = await _userManager.CreateAsync(newUser, Password);
 
                 if(result.Succeeded)
                 {
@@ -83,20 +102,23 @@ namespace FINAL_PROJECT_Meow.Controllers
                         AffectedTable = "Users"
                     };
 
-
                     _context.AuditTrails.Add(activity);
                     await _context.SaveChangesAsync();
                     return RedirectToAction(nameof(Index));
                 }
                 else
                 {
-                    return View();
+                    foreach (var error in result.Errors)
+                    {
+                        ModelState.AddModelError("", error.Description);
+                    }
+                    return View(user);
                 }
-
             }
             catch(Exception ex)
             {
-                return View();
+                ModelState.AddModelError("", "An error occurred while creating the user.");
+                return View(user);
             }
         }
 

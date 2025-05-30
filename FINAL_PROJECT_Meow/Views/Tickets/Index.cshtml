@@ -1,73 +1,108 @@
 ﻿@model IEnumerable<FINAL_PROJECT_Meow.Models.Ticket>
+@using Microsoft.AspNetCore.Identity
+@inject UserManager<ApplicationUser> UserManager
+@inject SignInManager<ApplicationUser> SignInManager
 
 @{
     ViewData["Title"] = "Index";
+    var user = await UserManager.GetUserAsync(User);
+    var userRoles = await UserManager.GetRolesAsync(user);
+    bool isStaff = userRoles.Contains("Supervisor") || userRoles.Contains("Officer");
+    bool isSupervisor = userRoles.Contains("Supervisor");
 }
 
-<h1>Ticket List</h1>
+<h1>Tickets</h1>
 
 <p>
     <a asp-action="Create">Create New</a>
 </p>
-<table class="table table-bordered table-responsive table-hover table-responsive-lg">
-
+<table class="table">
     <thead>
         <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.Id)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Title)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Description)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Status)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Priority)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.CreatedBy)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.CreatedOn)
-            </th>
-            <th></th>
+            <th>@Html.DisplayNameFor(model => model.Title)</th>
+            <th>@Html.DisplayNameFor(model => model.Description)</th>
+            <th>@Html.DisplayNameFor(model => model.Status)</th>
+            <th>@Html.DisplayNameFor(model => model.Priority)</th>
+            <th>Created By</th>
+            <th>Created On</th>
+            @if (isStaff)
+            {
+                <th>Assigned To</th>
+                <th>Actions</th>
+            }
         </tr>
     </thead>
     <tbody>
 @foreach (var item in Model) {
         <tr>
+            <td>@Html.DisplayFor(modelItem => item.Title)</td>
+            <td>@Html.DisplayFor(modelItem => item.Description)</td>
+            <td>@Html.DisplayFor(modelItem => item.Status)</td>
+            <td>@Html.DisplayFor(modelItem => item.Priority)</td>
+            <td>@Html.DisplayFor(modelItem => item.CreatedBy.FullName)</td>
+            <td>@Html.DisplayFor(modelItem => item.CreatedOn)</td>
+            @if (isStaff)
+            {
                 <td>
-                    @Html.DisplayFor(modelItem => item.Id)
+                    @if (isSupervisor && (item.Status == "Open" || item.Status == "Assigned"))
+                    {
+                        <form asp-action="AssignTicket" asp-route-id="@item.Id" method="post" style="display: inline;">
+                            <select name="assignedToId" class="form-control form-control-sm" onchange="this.form.submit()">
+                                <option value="">Select Officer</option>
+                                @foreach (var officer in ViewBag.AvailableOfficers)
+                                {
+                                    if (item.AssignedToId == officer.Value)
+                                    {
+                                        <option value="@officer.Value" selected>@officer.Text</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="@officer.Value">@officer.Text</option>
+                                    }
+                                }
+                            </select>
+                        </form>
+                    }
+                    else
+                    {
+                        @(item.AssignedTo?.FullName ?? "Not Assigned")
+                    }
                 </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Title)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Description)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Status)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Priority)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.CreatedBy.FullName)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.CreatedOn)
-            </td>
-            <td>
-
-                <a asp-action="Edit" asp-route-id="@item.Id">Edit</a> |
-                <a asp-action="Details" asp-route-id="@item.Id">Details</a> |
-                <a asp-action="Delete" asp-route-id="@item.Id">Delete</a>
-            </td>
+                <td>
+                    @if ((item.Status == "Open" || item.Status == "Assigned") && item.AssignedToId == user.Id)
+                    {
+                        <form asp-action="StartResolution" asp-route-id="@item.Id" method="post" style="display: inline;">
+                            <button type="submit" class="btn btn-primary btn-sm">Start Resolution</button>
+                        </form>
+                    }
+                    else if (item.Status == "In Progress" && item.AssignedToId == user.Id)
+                    {
+                        <form asp-action="CompleteResolution" asp-route-id="@item.Id" method="post" style="display: inline;">
+                            <button type="submit" class="btn btn-success btn-sm">Complete Resolution</button>
+                        </form>
+                    }
+                    <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-info btn-sm">Details</a>
+                </td>
+            }
+            else
+            {
+                <td>
+                    <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-info btn-sm">Details</a>
+                </td>
+            }
         </tr>
 }
     </tbody>
 </table>
+
+@section Scripts {
+    <script>
+        // Add Bootstrap styling to select elements
+        document.addEventListener('DOMContentLoaded', function() {
+            var selects = document.querySelectorAll('select');
+            selects.forEach(function(select) {
+                select.classList.add('form-select');
+            });
+        });
+    </script>
+}
